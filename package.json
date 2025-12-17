@@ -1,0 +1,17 @@
+{
+  "name": "youtube-backend",
+  "version": "1.0.0",
+  "description": "A clone of youtube backend",
+  "keywords": [
+    "javascript",
+    "backend",
+    "youtube"
+  ],
+  "license": "ISC",
+  "author": "Arbaaz Ansari",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
