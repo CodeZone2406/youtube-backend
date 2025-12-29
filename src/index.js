@@ -1,7 +1,7 @@
 // require('dotenv').config({path: './env'})
 import dotenv from "dotenv";
 import connectDB from "./db/index.js";
-import e from "express";
+import { app } from "./app.js";
 
 dotenv.config({
     path: './env'
@@ -18,8 +18,8 @@ connectDB()
         throw err;
     })
 })
-.catch((err) => {
-    console.log("MONGO DB Connection failed !!!", err);
+.catch((error) => {
+    console.log("MONGO DB Connection failed !!!", error);
 })
 
 
