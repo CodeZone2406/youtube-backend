@@ -287,6 +287,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Avatar file is required")
     }
 
+    // Todo - Create a Utility function to Delete the old Avatar before uploading new avatar to cloudinary
+
     const avatar = await UploadOnCloudinary(avatarLocalPath)
 
     if(!avatar.url){
