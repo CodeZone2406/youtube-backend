@@ -12,3 +12,5 @@ const subscriptionSchema = new Schema({
 }, { timestamps: true })
 
 export const Subscription = mongoose.model("subscription", subscriptionSchema)
+
+// Note : To find the subscribers of a channel --> select those documents where the channel names are being matched
