@@ -5,6 +5,8 @@ import { UploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { generateAccessAndRefreshTokens } from "../services/token.services.js";
 import jwt from "jsonwebtoken";
+import { deleteFromCloudinary } from "../utils/DeleteFile.js";
+import fs from fs
 
 const registerUser = asyncHandler(async (req, res) => {
     // get user details from frontend
@@ -95,6 +97,13 @@ const registerUser = asyncHandler(async (req, res) => {
         new ApiResponse(200, createdUser, "User registered Successfully!!")
     )
 })
+
+function getCloudinaryPublicId(localfilePathURL){
+    if(!localfilePathURL) return null;
+    const urlParts = url.split("/");
+    const lastPart = urlParts.pop().split("?")[0]; 
+    return lastPart.split(".")[0];
+}
 
 const loginUser = asyncHandler(async (req, res) => {
     // req body -> data
@@ -287,7 +296,15 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Avatar file is required")
     }
 
+    const Currentuser = await User.findById(req.user?._id)
+    const avatarPublicId = Currentuser.avatar ? getCloudinaryPublicId(Currentuser.avatar) : null;
+
     // Todo - Create a Utility function to Delete the old Avatar before uploading new avatar to cloudinary
+    if(avatarPublicId){
+        await deleteFromCloudinary(avatarPublicId);
+        fs.unlink(avatarLocalPath)
+    }
+
 
     const avatar = await UploadOnCloudinary(avatarLocalPath)
 
