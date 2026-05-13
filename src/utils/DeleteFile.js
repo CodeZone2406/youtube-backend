@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
-import { ApiError } from "./ApiError";
-import { ApiResponse } from "./ApiResponse";
+import { ApiError } from "./ApiError.js";
+import { ApiResponse } from "./ApiResponse.js";
 
 const deleteFromCloudinary = async (publicId) => {
     if (!publicId) {

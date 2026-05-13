@@ -6,7 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { generateAccessAndRefreshTokens } from "../services/token.services.js";
 import jwt from "jsonwebtoken";
 import { deleteFromCloudinary } from "../utils/DeleteFile.js";
-import fs from fs
+// import fs from fs
 import mongoose from "mongoose";
 
 const registerUser = asyncHandler(async (req, res) => {
