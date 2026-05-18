@@ -163,19 +163,8 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid user credentials");
   }
 
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-    user._id
-  );
-
-  const loggedInUser = await User.findByIdAndUpdate(
-    user._id,
-    {
-      $set: {
-        refreshToken,
-      },
-    },
-    { new: true }
-  ).select("-password -refreshToken");
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
 
   const refreshTokenHash = crypto
     .createHash("sha256")
@@ -189,6 +178,8 @@ const loginUser = asyncHandler(async (req, res) => {
     userAgent: req.headers["user-agent"],
   });
 
+  const loggedInUser = await User.findById(user._id).select("-password");
+  
   const options = {
     httpOnly: true,
     secure: true,

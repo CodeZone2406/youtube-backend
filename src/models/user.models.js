@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     username: {
       type: String,
       required: true,
-      unqiue: true,
+      unique: true,
       lowercase: true,
       trim: true,
       index: true,
@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unqiue: true,
+      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -41,9 +41,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-    },
-    refreshToken: {
-      type: String,
     },
     verified: {
       type: Boolean,
