@@ -42,6 +42,7 @@ const uploadVideos = asyncHandler(async (req, res) => {
       title: title.trim(),
       description: description.trim(),
       duration: parsedDuration,
+      owner: req.user._id,
     });
 
     return res
@@ -75,4 +76,73 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video Fetched Successfully"));
 });
 
-export { uploadVideos, getAllVideos, getVideoById };
+const updateVideo = asyncHandler(async (req, res) => {
+  const { title, description } = req.body;
+  const videoId = req.params.videoId;
+
+  if (!title && !description) {
+    throw new ApiError(400, "At least one field is required!");
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title: title?.trim(),
+        description: description?.trim(),
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video Details Updated Successfully"));
+});
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const videoId = req.params.videoId;
+
+  const deletedVideo = await Video.findByIdAndDelete(videoId);
+
+  if (!deletedVideo) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletedVideo, "Video deleted successfully!"));
+});
+
+const getUserVideos = asyncHandler(async (req, res) => {
+  const userId = req.params.userId;
+  console.log(userId);
+
+  const videos = await Video.find({ owner: userId });
+  console.log(videos);
+  if (videos.length === 0) {
+    throw new ApiError(404, "Video not found for this user");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Video Fetched Successfully"));
+});
+
+const togglePublishStatus = asyncHandler(async (req, res) => {});
+
+export {
+  uploadVideos,
+  getAllVideos,
+  getVideoById,
+  updateVideo,
+  deleteVideo,
+  getUserVideos,
+  togglePublishStatus,
+};

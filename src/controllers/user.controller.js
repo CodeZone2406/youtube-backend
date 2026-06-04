@@ -178,7 +178,7 @@ const loginUser = asyncHandler(async (req, res) => {
     userAgent: req.headers["user-agent"],
   });
 
-  const loggedInUser = await User.findById(user._id).select("-password");
+  const loggedInUser = await User.findById(user._id).select("-password ");
   
   const options = {
     httpOnly: true,

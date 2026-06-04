@@ -4,6 +4,10 @@ import {
   uploadVideos,
   getAllVideos,
   getVideoById,
+  updateVideo,
+  deleteVideo,
+  getUserVideos,
+  togglePublishStatus,
 } from "../controllers/video.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -30,17 +34,17 @@ router.route("/").get(getAllVideos);
 // Get a specific video
 router.route("/:videoId").get(getVideoById);
 
-// // Update video details (title, description)
-// router.route("/:videoId").patch(verifyJWT, updateVideo);
+// Update video details (title, description)
+router.route("/:videoId").patch(verifyJWT, updateVideo);
 
-// // Delete a video
-// router.route("/:videoId").delete(verifyJWT, deleteVideo);
+// Delete a video
+router.route("/:videoId").delete(verifyJWT, deleteVideo);
 
-// // Get videos by a specific user
-// router.route("/user/:userId").get(getUserVideos);
+// Get videos by a specific user
+router.route("/user/:userId").get(getUserVideos);
 
-// // Toggle video publish status
-// router.route("/:videoId/toggle-publish").patch(verifyJWT, togglePublishStatus);
+// Toggle video publish status
+router.route("/:videoId/toggle-publish").patch(verifyJWT, togglePublishStatus);
 
 // // Like/Unlike a video
 // router.route("/:videoId/toggle-like").post(verifyJWT, toggleVideoLike);
