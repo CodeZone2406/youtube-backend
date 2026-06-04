@@ -3,6 +3,7 @@ import { Video } from "../models/video.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { UploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary } from "../utils/DeleteFile.js";
 
 const uploadVideos = asyncHandler(async (req, res) => {
   const { title, description, duration } = req.body;
@@ -109,6 +110,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
   const videoId = req.params.videoId;
 
+  deleteFromCloudinary(videoId);
   const deletedVideo = await Video.findByIdAndDelete(videoId);
 
   if (!deletedVideo) {
