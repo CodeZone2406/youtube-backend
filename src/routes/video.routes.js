@@ -8,6 +8,7 @@ import {
   deleteVideo,
   getUserVideos,
   togglePublishStatus,
+  toggleVideoLike,
 } from "../controllers/video.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -46,8 +47,8 @@ router.route("/user/:userId").get(getUserVideos);
 // Toggle video publish status
 router.route("/:videoId/toggle-publish").patch(verifyJWT, togglePublishStatus);
 
-// // Like/Unlike a video
-// router.route("/:videoId/toggle-like").post(verifyJWT, toggleVideoLike);
+// Like/Unlike a video
+router.route("/:videoId/toggle-like").post(verifyJWT, toggleVideoLike);
 
 // // Get video statistics
 // router.route("/:videoId/stats").get(getVideoStats);

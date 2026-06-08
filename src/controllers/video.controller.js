@@ -137,7 +137,33 @@ const getUserVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, videos, "Video Fetched Successfully"));
 });
 
-const togglePublishStatus = asyncHandler(async (req, res) => {});
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const videoId = req.params.videoId;
+
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "Video not found!");
+  }
+
+  if (video.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You don't have access to this video!");
+  }
+
+  video.isPublished = !video.isPublished;
+  await video.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        video,
+        `Video ${video.isPublished ? "published" : "unpublished"} successfully`
+      )
+    );
+});
+
+const toggleVideoLike = asyncHandler(async (req, res) => {});
 
 export {
   uploadVideos,
@@ -147,4 +173,5 @@ export {
   deleteVideo,
   getUserVideos,
   togglePublishStatus,
+  toggleVideoLike
 };
