@@ -50,7 +50,7 @@ router.route("/:videoId/toggle-publish").patch(verifyJWT, togglePublishStatus);
 // Like/Unlike a video
 router.route("/:videoId/toggle-like").post(verifyJWT, toggleVideoLike);
 
-// // Get video statistics
+// Get video statistics
 // router.route("/:videoId/stats").get(getVideoStats);
 
 export default router;

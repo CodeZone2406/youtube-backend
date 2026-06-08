@@ -163,7 +163,32 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     );
 });
 
-const toggleVideoLike = asyncHandler(async (req, res) => {});
+const toggleVideoLike = asyncHandler(async (req, res) => {
+  const videoId = req.params.videoId;
+  const userId = req.user._id;
+
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "Video not found!");
+  }
+
+  const hasLiked = await video.likes.includes(userId);
+
+  await Video.updateOne(
+    {
+      _id: video,
+    },
+    hasLiked ? { $pull: { likes: userId } } : { $addToSet: { likes: userId } }
+  );
+
+  await video.save();
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, hasLiked ? "Unliked Video" : "Liked Video", "True")
+    );
+});
 
 export {
   uploadVideos,
@@ -173,5 +198,5 @@ export {
   deleteVideo,
   getUserVideos,
   togglePublishStatus,
-  toggleVideoLike
+  toggleVideoLike,
 };

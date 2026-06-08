@@ -35,10 +35,12 @@ const videoSchema = new Schema(
       type: Schema.Types.ObjectId,
       Ref: "User",
     },
-    like: {
-      type: Number,
-      default: 0,
-    },
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,
