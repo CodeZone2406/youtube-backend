@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { UploadOnCloudinary } from "../utils/cloudinary.js";
 import { deleteFromCloudinary } from "../utils/DeleteFile.js";
+import mongoose from "mongoose";
 
 const uploadVideos = asyncHandler(async (req, res) => {
   const { title, description, duration } = req.body;
@@ -124,7 +125,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const getUserVideos = asyncHandler(async (req, res) => {
   const userId = req.params.userId;
-  console.log(userId);
+  // console.log(userId);
 
   const videos = await Video.find({ owner: userId });
   console.log(videos);
@@ -190,6 +191,141 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     );
 });
 
+const getVideoStats = asyncHandler(async (req, res) => {
+  // Video Stats to Display :
+  // thumbnail, title, description, duration, views, owner, and likes count
+  const videoId = req.params.videoId;
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video Not Found");
+  }
+
+  const videoStats = await Video.aggregate([
+    // Stage 1: Find the specific video using its _id
+    // Input: All videos in the collection
+    // Output: Only the video matching videoId
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+
+    // Stage 2: Join the users collection
+    // owner field contains a User ObjectId
+    // MongoDB fetches the corresponding user document
+    // Output: owner becomes an array containing the matched user
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+
+    // Before $unwind:
+    // owner: [
+    //   {
+    //     _id: "...",
+    //     username: "arbaaz"
+    //   }
+    // ]
+
+    // Stage 3: Convert owner array into a single object
+    // Makes it easier to access owner.username, owner.fullName, etc.
+    {
+      $unwind: "$owner",
+    },
+
+    // After $unwind:
+    // owner: {
+    //   _id: "...",
+    //   username: "arbaaz"
+    // }
+
+    // Stage 4: Shape the final response
+    // - Keep only required fields
+    // - Create a new field likesCount
+    // - Format owner information
+    {
+      $project: {
+        thumbnail: 1,
+        title: 1,
+        description: 1,
+        duration: 1,
+        views: 1,
+
+        // Count number of likes in the likes array
+        likesCount: {
+          $size: "$likes",
+        },
+
+        // Return only selected owner fields
+        owner: {
+          _id: "$owner._id",
+          username: "$owner.username",
+          fullName: "$owner.fullName",
+          avatar: "$owner.avatar",
+        },
+      },
+    },
+  ]);
+
+  /*
+  Pipeline Flow:
+
+  Videos Collection
+        │
+        ▼
+    $match
+        │
+        ▼
+  Selected Video
+        │
+        ▼
+    $lookup
+        │
+        ▼
+  Video + Owner Array
+        │
+        ▼
+    $unwind
+        │
+        ▼
+  Video + Owner Object
+        │
+        ▼
+    $project
+        │
+        ▼
+  Final API Response
+
+  Example Output:
+
+  {
+    "thumbnail": "thumbnail.jpg",
+    "title": "MongoDB Aggregation",
+    "description": "Learn Aggregation Pipeline",
+    "duration": 600,
+    "views": 1500,
+    "likesCount": 25,
+    "owner": {
+      "_id": "...",
+      "username": "arbaaz",
+      "fullName": "Arbaaz Ansari",
+      "avatar": "avatar.jpg"
+    }
+  }
+  */
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, videoStats[0], "Video stats fetched successfully")
+    );
+});
+
 export {
   uploadVideos,
   getAllVideos,
@@ -199,4 +335,5 @@ export {
   getUserVideos,
   togglePublishStatus,
   toggleVideoLike,
+  getVideoStats,
 };
