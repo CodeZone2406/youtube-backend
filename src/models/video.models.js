@@ -33,7 +33,7 @@ const videoSchema = new Schema(
     },
     owner: {
       type: Schema.Types.ObjectId,
-      Ref: "User",
+      ref: "User",
     },
     likes: [
       {
