@@ -13,6 +13,7 @@ import otpModel from "../models/otp.models.js";
 import { generateOTP, generateOTPHtml } from "../utils/otpGenerator.js";
 import { sendEmail } from "../services/email.service.js";
 import sessionModel from "../models/session.models.js";
+import { registerUserSchema } from "../schemas/userSchema.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
@@ -25,8 +26,14 @@ const registerUser = asyncHandler(async (req, res) => {
   //  check if for user creation
   // return response
 
-  const { fullname, email, username, password } = req.body;
-  console.log("email : ", email);
+  const validateResult = registerUserSchema.safeParse(req.body);
+
+  if (!validateResult.success) {
+    return res.status(400).json(new ApiError(400, "Validation Failed", validateResult.error.format()));
+  }
+
+  const { fullname, email, username, password } = validateResult.data;
+  // console.log("email : ", email);
   // console.log("req.file", req.file);
   // console.log("req.files", req.files);
 
@@ -37,11 +44,11 @@ const registerUser = asyncHandler(async (req, res) => {
   // console.log("req.files.avatar:", req.files?.avatar);
   // console.log("req.files.coverImage:", req.files?.coverImage);
 
-  if (
-    [fullname, email, username, password].some((field) => field?.trim() === "")
-  ) {
-    throw new ApiError(400, "All fields are compulsory or required");
-  }
+  // if (
+  //   [fullname, email, username, password].some((field) => field?.trim() === "")
+  // ) {
+  //   throw new ApiError(400, "All fields are compulsory or required");
+  // }
 
   const existingUser = await User.findOne({
     $or: [{ username }, { email }],
@@ -66,9 +73,9 @@ const registerUser = asyncHandler(async (req, res) => {
   // console.log("avatarLocalPath:", avatarLocalPath);
   // console.log("coverImageLocalPath:", coverImageLocalPath);
 
-  if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar file is required");
-  }
+  // if (!avatarLocalPath) {
+  //   throw new ApiError(400, "Avatar file is required");
+  // }
 
   // console.log("✅ About to upload avatar to Cloudinary...");
   const avatar = await UploadOnCloudinary(avatarLocalPath);
@@ -120,7 +127,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered Successfully!!"));
+    .json(new ApiResponse(201, createdUser, "User registered Successfully!!"));
 });
 
 function getCloudinaryPublicId(localfilePathURL) {
@@ -179,7 +186,7 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   const loggedInUser = await User.findById(user._id).select("-password ");
-  
+
   const options = {
     httpOnly: true,
     secure: true,

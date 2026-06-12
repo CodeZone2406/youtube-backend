@@ -33,6 +33,7 @@
     "nodemailer": "^8.0.7",
     "prettier": "^3.7.4",
     "resend": "^6.12.3",
-    "simpleverify": "^1.0.3"
+    "simpleverify": "^1.0.3",
+    "zod": "^4.4.3"
   }
 }
