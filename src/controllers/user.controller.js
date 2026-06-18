@@ -6,14 +6,13 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { generateAccessAndRefreshTokens } from "../services/token.services.js";
 import jwt from "jsonwebtoken";
 import { deleteFromCloudinary } from "../utils/DeleteFile.js";
-// import fs from fs
 import mongoose from "mongoose";
 import crypto from "crypto";
 import otpModel from "../models/otp.models.js";
 import { generateOTP, generateOTPHtml } from "../utils/otpGenerator.js";
 import { sendEmail } from "../services/email.service.js";
 import sessionModel from "../models/session.models.js";
-import { registerUserSchema } from "../schemas/userSchema.js";
+import { registerUserSchema, loginUserSchema } from "../schemas/userSchema.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
@@ -29,7 +28,11 @@ const registerUser = asyncHandler(async (req, res) => {
   const validateResult = registerUserSchema.safeParse(req.body);
 
   if (!validateResult.success) {
-    return res.status(400).json(new ApiError(400, "Validation Failed", validateResult.error.format()));
+    return res
+      .status(400)
+      .json(
+        new ApiError(400, "Validation Failed", validateResult.error.format())
+      );
   }
 
   const { fullname, email, username, password } = validateResult.data;
@@ -146,15 +149,25 @@ const loginUser = asyncHandler(async (req, res) => {
   // send in the form of secure cookies
   // send a response for successful login
 
-  const { username, email, password } = req.body;
+  const validateResult = loginUserSchema.safeParse(req.body);
 
-  if (!username && !email) {
-    throw new ApiError(400, "username or email is required");
+  if (!validateResult.success) {
+    return res
+      .status(400)
+      .json(
+        new ApiError(400, "Validation Failed", validateResult.error.format())
+      );
   }
 
-  if (!password) {
-    throw new ApiError(400, "Password is required");
-  }
+  const { email, username, password } = validateResult.data;
+
+  // if (!username && !email) {
+  //   throw new ApiError(400, "username or email is required");
+  // }
+
+  // if (!password) {
+  //   throw new ApiError(400, "Password is required");
+  // }
 
   const user = await User.findOne({
     $or: [{ username }, { email }],
@@ -201,8 +214,6 @@ const loginUser = asyncHandler(async (req, res) => {
         200,
         {
           user: loggedInUser,
-          accessToken,
-          refreshToken,
         },
         "User logged In Successfully"
       )
