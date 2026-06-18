@@ -13,8 +13,6 @@ export const registerUserSchema = z.object({
     .regex(/[A-Z]/, "Must contain uppercase letter")
     .regex(/[0-9]/, "Must contain number")
     .regex(/[!@#$%^&*]/, "Must contain special character"),
-  avatarUrl: z.url("Invalid avatar URL").optional(),
-  coverImageUrl: z.url("Invalid cover Image URL").optional(),
 });
 
 export const loginUserSchema = z
@@ -29,4 +27,19 @@ export const loginUserSchema = z
   .refine((data) => data.username || data.email, {
     message: "Either username or email is required",
     path: ["email"], // Shows error on email field
+  });
+
+export const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain uppercase letter")
+      .regex(/[0-9]/, "Must contain number")
+      .regex(/[!@#$%^&*]/, "Must contain special character"),
+  })
+  .refine((data) => data.oldPassword !== data.newPassword, {
+    message: "New password must be different from current password",
+    path: ["newPassword"],
   });

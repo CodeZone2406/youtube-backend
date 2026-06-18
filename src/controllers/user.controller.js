@@ -12,7 +12,11 @@ import otpModel from "../models/otp.models.js";
 import { generateOTP, generateOTPHtml } from "../utils/otpGenerator.js";
 import { sendEmail } from "../services/email.service.js";
 import sessionModel from "../models/session.models.js";
-import { registerUserSchema, loginUserSchema } from "../schemas/userSchema.js";
+import {
+  registerUserSchema,
+  loginUserSchema,
+  changePasswordSchema,
+} from "../schemas/userSchema.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
@@ -28,14 +32,11 @@ const registerUser = asyncHandler(async (req, res) => {
   const validateResult = registerUserSchema.safeParse(req.body);
 
   if (!validateResult.success) {
-    return res
-      .status(400)
-      .json(
-        new ApiError(400, "Validation Failed", validateResult.error.format())
-      );
+    throw new ApiError(400, "Validation failed", validateResult.error.format());
   }
 
   const { fullname, email, username, password } = validateResult.data;
+  // const { fullname, email, username, password } = req.body;
   // console.log("email : ", email);
   // console.log("req.file", req.file);
   // console.log("req.files", req.files);
@@ -152,25 +153,24 @@ const loginUser = asyncHandler(async (req, res) => {
   const validateResult = loginUserSchema.safeParse(req.body);
 
   if (!validateResult.success) {
-    return res
-      .status(400)
-      .json(
-        new ApiError(400, "Validation Failed", validateResult.error.format())
-      );
+    throw new ApiError(400, "Validation failed", validateResult.error.format());
   }
 
   const { email, username, password } = validateResult.data;
-
-  // if (!username && !email) {
-  //   throw new ApiError(400, "username or email is required");
-  // }
+  // const { email, username, password } = req.body;
 
   // if (!password) {
   //   throw new ApiError(400, "Password is required");
   // }
 
+  // if (!email && !username) {
+  //   throw new ApiError(400, "Username or email is required");
+  // }
+
   const user = await User.findOne({
-    $or: [{ username }, { email }],
+    $or: [email ? { email } : null, username ? { username } : null].filter(
+      Boolean
+    ),
   });
 
   if (!user) {
@@ -180,7 +180,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid user credentials");
+    throw new ApiError(401, "Invalid credentials");
   }
 
   const accessToken = user.generateAccessToken();
@@ -198,24 +198,24 @@ const loginUser = asyncHandler(async (req, res) => {
     userAgent: req.headers["user-agent"],
   });
 
-  const loggedInUser = await User.findById(user._id).select("-password ");
+  const loggedInUser = await User.findById(user._id).select("-password");
 
-  const options = {
+  const cookieOptions = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 24 * 60 * 60 * 1000,
   };
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
-        {
-          user: loggedInUser,
-        },
-        "User logged In Successfully"
+        { user: loggedInUser },
+        "User logged in successfully"
       )
     );
 });
@@ -307,7 +307,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentUserPassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const validateResult = changePasswordSchema.safeParse(req.body);
+  if (!validateResult.success) {
+    throw new ApiError(400, "Validation failed", validateResult.error.format());
+  }
+  // const { oldPassword, newPassword } = req.body;
 
   const user = await User.findById(req.user?._id);
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
