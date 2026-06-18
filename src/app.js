@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import { errorMiddleware } from "../src/middlewares/error.middleware.js";
 
 const app = express();
 
@@ -28,4 +29,5 @@ app.use("/api/v1/users", userRouter); //http://localhost:8000/api/v1/users
 app.use("/api/v1/videos", videoRouter); //http://localhost:8000/api/v1/videos
 app.use("/api/v1/comments", commentRouter); //http://localhost:8000/api/v1/comments
 
+app.use(errorMiddleware);
 export { app };

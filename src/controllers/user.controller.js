@@ -29,24 +29,24 @@ const registerUser = asyncHandler(async (req, res) => {
   //  check if for user creation
   // return response
 
-  const validateResult = registerUserSchema.safeParse(req.body);
+  const dataToValidate = {
+    ...req.body,
+    avatar: req.files?.avatar,
+    coverImage: req.files?.coverImage,
+  };
+
+  const validateResult = registerUserSchema.safeParse(dataToValidate);
 
   if (!validateResult.success) {
-    throw new ApiError(400, "Validation failed", validateResult.error.format());
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
   }
 
   const { fullname, email, username, password } = validateResult.data;
   // const { fullname, email, username, password } = req.body;
-  // console.log("email : ", email);
-  // console.log("req.file", req.file);
-  // console.log("req.files", req.files);
-
-  // console.log("=== DEBUGGING ===");
-  // console.log("req.body:", req.body);
-  // console.log("req.files:", req.files);
-  // console.log("req.files type:", typeof req.files);
-  // console.log("req.files.avatar:", req.files?.avatar);
-  // console.log("req.files.coverImage:", req.files?.coverImage);
 
   // if (
   //   [fullname, email, username, password].some((field) => field?.trim() === "")
@@ -63,7 +63,6 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
   let coverImageLocalPath;
   if (
@@ -74,22 +73,11 @@ const registerUser = asyncHandler(async (req, res) => {
     coverImageLocalPath = req.files.coverImage[0].path;
   }
 
-  // console.log("avatarLocalPath:", avatarLocalPath);
-  // console.log("coverImageLocalPath:", coverImageLocalPath);
-
-  // if (!avatarLocalPath) {
-  //   throw new ApiError(400, "Avatar file is required");
-  // }
-
-  // console.log("✅ About to upload avatar to Cloudinary...");
   const avatar = await UploadOnCloudinary(avatarLocalPath);
-  // console.log("✅ Avatar upload result:", avatar);
 
-  // console.log("✅ About to upload coverImage to Cloudinary...");
   const coverImage = coverImageLocalPath
     ? await UploadOnCloudinary(coverImageLocalPath)
     : null;
-  // console.log("✅ CoverImage upload result:", coverImage);
 
   if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
@@ -153,7 +141,14 @@ const loginUser = asyncHandler(async (req, res) => {
   const validateResult = loginUserSchema.safeParse(req.body);
 
   if (!validateResult.success) {
-    throw new ApiError(400, "Validation failed", validateResult.error.format());
+    // Create an object where the key is the field and the value is the error message
+    const errorMap = validateResult.error.errors.reduce((acc, err) => {
+      const fieldName = err.path.join(".");
+      acc[fieldName] = err.message;
+      return acc;
+    }, {});
+
+    throw new ApiError(400, "Validation failed", errorMap);
   }
 
   const { email, username, password } = validateResult.data;

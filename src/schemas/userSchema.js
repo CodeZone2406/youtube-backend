@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { userFileSchema } from "../schemas/userFileSchema.js";
 
 export const registerUserSchema = z.object({
   fullname: z.string().min(2, "FullName is required"),
@@ -6,13 +7,15 @@ export const registerUserSchema = z.object({
     .string()
     .min(3, "Username must be atleast 3 characters")
     .max(30, "Username must be at most 30 characters"),
-  email: z.email("Invalid email format"),
+  email: z.string().email("Invalid email format"),
   password: z
     .string()
     .min(6, "Password must be atleast 6 characters")
     .regex(/[A-Z]/, "Must contain uppercase letter")
     .regex(/[0-9]/, "Must contain number")
     .regex(/[!@#$%^&*]/, "Must contain special character"),
+  avatar: z.array(userFileSchema).nonempty("Avatar image is required"),
+  coverImage: z.array(userFileSchema).nonempty("Cover image is required"),
 });
 
 export const loginUserSchema = z
