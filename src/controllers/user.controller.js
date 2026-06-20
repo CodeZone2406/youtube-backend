@@ -16,6 +16,8 @@ import {
   registerUserSchema,
   loginUserSchema,
   changePasswordSchema,
+  updateUserProfileSchema,
+  verifyEmailSchema,
 } from "../schemas/userSchema.js";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -141,14 +143,11 @@ const loginUser = asyncHandler(async (req, res) => {
   const validateResult = loginUserSchema.safeParse(req.body);
 
   if (!validateResult.success) {
-    // Create an object where the key is the field and the value is the error message
-    const errorMap = validateResult.error.errors.reduce((acc, err) => {
-      const fieldName = err.path.join(".");
-      acc[fieldName] = err.message;
-      return acc;
-    }, {});
-
-    throw new ApiError(400, "Validation failed", errorMap);
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
   }
 
   const { email, username, password } = validateResult.data;
@@ -330,11 +329,15 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullname, email } = req.body;
-
-  if (!fullname || !email) {
-    throw new ApiError(401, "All Fields are required");
+  const validateResult = updateUserProfileSchema.safeParse(req.body);
+  if (!validateResult.success) {
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
   }
+  const { fullname, email } = validateResult.data;
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
@@ -550,7 +553,13 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {
-  const { otp, email } = req.body;
+  const validateResult = verifyEmailSchema.safeParse(req.body);
+
+  if (!validateResult.success) {
+    throw new ApiError(400, "Validation failed", validateResult.error.format());
+  }
+
+  const { otp, email } = validateResult.data;
 
   const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
 
