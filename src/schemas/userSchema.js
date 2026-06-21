@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { userFileSchema } from "../schemas/userFileSchema.js";
 
-const stringEmptyUndefined = (val) => (val.trim() === "" ? undefined : val);
+const stringEmptyUndefined = (val) =>
+  val.trim() === "" ? `${val} should not be empty` : val;
 
 export const registerUserSchema = z.object({
   fullname: z
