@@ -5,30 +5,37 @@ import { ApiError } from "../utils/ApiError.js";
 import { UploadOnCloudinary } from "../utils/cloudinary.js";
 import { deleteFromCloudinary } from "../utils/DeleteFile.js";
 import mongoose from "mongoose";
+import { getVideoDuration } from "../utils/getVideoDuration.js";
+import {
+  uploadVideoSchema,
+  updateVideoSchema,
+} from "../schemas/videoSchema.js";
 
 const uploadVideos = asyncHandler(async (req, res) => {
-  const { title, description, duration } = req.body;
-  const parsedDuration = Number(duration);
-  if (
-    typeof title !== "string" ||
-    typeof description !== "string" ||
-    !title.trim() ||
-    !description.trim() ||
-    isNaN(parsedDuration) ||
-    parsedDuration <= 0
-  ) {
-    throw new ApiError(400, "All fields are compulsory or required");
+  const dataToValidate = {
+    ...req.body,
+    videoFile: req.files?.videoFile,
+    thumbnail: req.files?.thumbnail,
+  };
+
+  const validateResult = uploadVideoSchema.safeParse(dataToValidate);
+
+  if (!validateResult.success) {
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
   }
+
+  const { title, description } = validateResult.data;
 
   const videoFilePath = req.files?.videoFile?.[0]?.path;
   const thumbnailPath = req.files?.thumbnail?.[0]?.path;
 
-  if (!videoFilePath || !thumbnailPath) {
-    throw new ApiError(400, "Video file and thumbnail are required");
-  }
-
   try {
-    const [videoFile, thumbnailFile] = await Promise.all([
+    const [videoDuration, videoFile, thumbnailFile] = await Promise.all([
+      getVideoDuration(videoFilePath),
       UploadOnCloudinary(videoFilePath),
       UploadOnCloudinary(thumbnailPath),
     ]);
@@ -43,7 +50,7 @@ const uploadVideos = asyncHandler(async (req, res) => {
       thumbnail: thumbnailFile.url,
       title: title.trim(),
       description: description.trim(),
-      duration: parsedDuration,
+      duration: videoDuration,
       owner: req.user._id,
     });
 
@@ -79,12 +86,18 @@ const getVideoById = asyncHandler(async (req, res) => {
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
-  const { title, description } = req.body;
-  const videoId = req.params.videoId;
+  const validateResult = updateVideoSchema.safeParse(req.body);
 
-  if (!title && !description) {
-    throw new ApiError(400, "At least one field is required!");
+  if (!validateResult.success) {
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
   }
+
+  const { title, description } = validateResult.data;
+  const videoId = req.params.videoId;
 
   const video = await Video.findByIdAndUpdate(
     videoId,
