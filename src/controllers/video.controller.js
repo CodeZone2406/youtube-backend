@@ -10,6 +10,7 @@ import {
   uploadVideoSchema,
   updateVideoSchema,
 } from "../schemas/videoSchema.js";
+import { formatDuration } from "../services/formatDuration.service.js";
 
 const uploadVideos = asyncHandler(async (req, res) => {
   const dataToValidate = {
@@ -17,6 +18,9 @@ const uploadVideos = asyncHandler(async (req, res) => {
     videoFile: req.files?.videoFile,
     thumbnail: req.files?.thumbnail,
   };
+
+  console.log(req.files.videoFile[0]);
+  console.log(req.files.thumbnail[0]);
 
   const validateResult = uploadVideoSchema.safeParse(dataToValidate);
 
@@ -33,13 +37,25 @@ const uploadVideos = asyncHandler(async (req, res) => {
   const videoFilePath = req.files?.videoFile?.[0]?.path;
   const thumbnailPath = req.files?.thumbnail?.[0]?.path;
 
+  if (!videoFilePath || !thumbnailPath) {
+    throw new ApiError(400, "Video file and thumbnail are required");
+  }
+
+  const videoDuration = await getVideoDuration(videoFilePath);
+
   try {
-    const [videoDuration, videoFile, thumbnailFile] = await Promise.all([
-      getVideoDuration(videoFilePath),
+    const [videoFile, thumbnailFile] = await Promise.all([
       UploadOnCloudinary(videoFilePath),
       UploadOnCloudinary(thumbnailPath),
     ]);
     // Run all these promises in parallel, and wait until ALL are done
+
+    if (!videoFile?.url || !thumbnailFile?.url) {
+      throw new ApiError(400, "Failed to upload video or thumbnail");
+    }
+
+    const roundedDuration = Math.round(videoDuration);
+    const formattedDuration = formatDuration(roundedDuration);
 
     if (!videoFile || !thumbnailFile) {
       throw new ApiError(400, "Upload failed");
@@ -50,7 +66,10 @@ const uploadVideos = asyncHandler(async (req, res) => {
       thumbnail: thumbnailFile.url,
       title: title.trim(),
       description: description.trim(),
-      duration: videoDuration,
+      duration: {
+        seconds: videoDuration,
+        formatted: formattedDuration,
+      },
       owner: req.user._id,
     });
 

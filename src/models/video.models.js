@@ -1,6 +1,20 @@
 import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
+const durationSchema = new mongoose.Schema(
+  {
+    seconds: {
+      type: Number,
+      required: true,
+    },
+    formatted: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const videoSchema = new Schema(
   {
     videoFile: {
@@ -19,10 +33,7 @@ const videoSchema = new Schema(
       type: String,
       required: true,
     },
-    duration: {
-      type: Number,
-      required: true,
-    },
+    duration: durationSchema,
     views: {
       type: Number,
       default: 0,

@@ -31,3 +31,5 @@ app.use("/api/v1/comments", commentRouter); //http://localhost:8000/api/v1/comme
 
 app.use(errorMiddleware);
 export { app };
+
+// taskkill /F /IM node.exe --> Kills the node process 
