@@ -4,9 +4,21 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.models.js";
 import mongoose from "mongoose";
+import {
+  addCommentSchema,
+  updateCommentSchema,
+} from "../schemas/commentSchema.js";
 
 const addComment = asyncHandler(async (req, res) => {
-  const { content } = req.body;
+  const validateResult = addCommentSchema.safeParse(req.body);
+  if (!validateResult.success) {
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
+  }
+  const { content } = validateResult.data;
   const videoId = req.params.videoId;
   const userId = req.user._id;
 
@@ -69,8 +81,16 @@ const getCommentByUser = asyncHandler(async (req, res) => {
 });
 
 const updateComment = asyncHandler(async (req, res) => {
+  const validateResult = updateCommentSchema.safeParse(req.body);
+  if (!validateResult.success) {
+    throw new ApiError(
+      400,
+      "Validation Failed",
+      validateResult.error.flatten()
+    );
+  }
+  const { updatedContent } = validateResult.data;
   const commentId = req.params.commentId;
-  const { updatedContent } = req.body;
 
   if (!updatedContent || !updatedContent.trim()) {
     throw new ApiError(400, "Comment cannot be empty");
