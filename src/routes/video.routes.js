@@ -10,6 +10,8 @@ import {
   togglePublishStatus,
   toggleVideoLike,
   getVideoStats,
+  getAllVideosByFilter,
+  getUserVideosByFilter,
 } from "../controllers/video.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -53,5 +55,11 @@ router.route("/:videoId/toggle-like").post(verifyJWT, toggleVideoLike);
 
 // Get video statistics
 router.route("/:videoId/video-stats").get(getVideoStats);
+
+// Get Videos By Filter
+router.get("/", getAllVideosByFilter);
+
+// Get User's Published Vidoes By Filter
+router.route("/users/:userId/videos").get(verifyJWT, getUserVideosByFilter);
 
 export default router;

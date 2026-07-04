@@ -91,6 +91,56 @@ const getAllVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, videos, "Videos Fectched Successfully"));
 });
 
+const getAllVideosByFilter = asyncHandler(async (req, res) => {
+  const { page, limit, search, sortBy, sortType, isPublished } = req.query;
+
+  const match = {};
+
+  if (search) {
+    match.$or = [
+      {
+        title: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        description: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
+  if (isPublished !== undefined) {
+    match.isPublished = isPublished === "true";
+  }
+
+  const aggregate = Video.aggregate([
+    {
+      $match: match,
+    },
+
+    {
+      $sort: {
+        [sortBy]: sortType === "asc" ? 1 : -1,
+      },
+    },
+  ]);
+
+  const options = {
+    page: Number(page),
+    limit: Number(limit),
+  };
+
+  const videos = await Video.aggregatePaginate(aggregate, options);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+});
+
 const getVideoById = asyncHandler(async (req, res) => {
   const id = req.params.videoId;
   const video = await Video.findById(id);
@@ -168,6 +218,52 @@ const getUserVideos = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, videos, "Video Fetched Successfully"));
+});
+
+const getUserVideosByFilter = asyncHandler(async (req, res) => {
+  const userId = req.params.userId;
+
+  const { page, limit, search, sortBy, sortType, isPublished } = req.query;
+
+  const match = { owner: new mongoose.Types.ObjectId(userId) };
+
+  if (search) {
+    match.$or = [
+      {
+        title: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        description: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
+  const aggregate = Video.aggregate([
+    {
+      $match: match,
+    },
+
+    {
+      $sort: {
+        [sortBy]: sortType === "asc" ? 1 : -1,
+      },
+    },
+  ]);
+
+  const videos = await Video.aggregatePaginate(aggregate, {
+    page: Number(page),
+    limit: Number(limit),
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -368,4 +464,6 @@ export {
   togglePublishStatus,
   toggleVideoLike,
   getVideoStats,
+  getAllVideosByFilter,
+  getUserVideosByFilter,
 };
