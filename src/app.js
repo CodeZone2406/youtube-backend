@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.config.js";
 import { errorMiddleware } from "../src/middlewares/error.middleware.js";
 
 const app = express();
@@ -28,6 +30,15 @@ import commentRouter from "./routes/comment.routes.js";
 app.use("/api/v1/users", userRouter); //http://localhost:8000/api/v1/users
 app.use("/api/v1/videos", videoRouter); //http://localhost:8000/api/v1/videos
 app.use("/api/v1/comments", commentRouter); //http://localhost:8000/api/v1/comments
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "YouTube Backend API Docs",
+  explorer: true,
+}));
+
+app.get("/swagger.json", (req, res) => {
+  res.json(swaggerSpec);
+});
 
 app.use(errorMiddleware);
 export { app };

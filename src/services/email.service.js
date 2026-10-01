@@ -1,11 +1,17 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 export const sendEmail = async ({ from, to, subject, html }) => {
   try {
+    if (!resend) {
+      throw new Error("RESEND_API_KEY is missing in environment variables");
+    }
+
     const { data, error } = await resend.emails.send({
-      from: "Website <website@resend.dev>",
+      from: from || "Website <website@resend.dev>",
       to: [to],
       subject,
       html,
